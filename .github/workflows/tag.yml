@@ -73,7 +73,7 @@ jobs:
           name: Release ${{ steps.get_tag.outputs.NAME }}
 
           files: |
-            */build/libs/*.jar
+            i18n-generator/build/libs/*.jar
 
       - name: Release webhook
         run: kotlin .github/release.main.kts

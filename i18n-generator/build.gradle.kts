@@ -17,6 +17,11 @@ val projectVersion: String by project
 group = "dev.kordex.i18n"
 version = projectVersion
 
+metadata {
+	name = "KordEx: i18n Class Generator"
+	description = "API and CLI for generating translation classes from properties files"
+}
+
 repositories {
     mavenCentral()
 }

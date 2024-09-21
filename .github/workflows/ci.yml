@@ -40,5 +40,13 @@ jobs:
         uses: actions/upload-artifact@v4
 
         with:
-          name: JARs
-          path: "*/build/libs/*.jar"
+          name: Generator JARs
+          path: "i18n-generator/build/libs/*.jar"
+
+      - name: Upload JARs
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: Generator CLI JAR
+          path: "i18n-generator/build/libs/*-all.jar"
+

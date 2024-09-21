@@ -15,7 +15,7 @@ afterEvaluate {
 	publishing {
 		repositories {
 			maven {
-				name = "KordEx: i18n"
+				name = "KordEx"
 
 				url = if (project.version.toString().contains("SNAPSHOT")) {
 					uri("https://repo.kordex.dev/snapshots/")

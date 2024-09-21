@@ -1,13 +1,8 @@
 import org.gradle.kotlin.dsl.invoke
 
 plugins {
-    val env = System.getenv()
-
     general
-
-    if (env.contains("GITHUB_ACTIONS") && !env.contains("NO_SIGNING")) {
-        published
-    }
+    published
 
 	id("com.github.johnrengelman.shadow") version "8.1.1"
 }

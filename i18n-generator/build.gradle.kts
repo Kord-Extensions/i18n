@@ -14,13 +14,13 @@ group = "dev.kordex.i18n"
 version = projectVersion
 
 application {
-	mainClass.set("dev.kordex.i18n.generator.MainKt.main")
+	mainClass.set("dev.kordex.i18n.generator.MainKt")
 }
 
 tasks.jar {
 	manifest {
 		attributes(
-			"Main-Class" to "dev.kordex.i18n.generator.MainKt.main"
+			"Main-Class" to "dev.kordex.i18n.generator.MainKt"
 		)
 	}
 }

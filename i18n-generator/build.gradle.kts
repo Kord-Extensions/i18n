@@ -1,6 +1,7 @@
 import org.gradle.kotlin.dsl.invoke
 
 plugins {
+	application
     general
     published
 
@@ -11,6 +12,18 @@ val projectVersion: String by project
 
 group = "dev.kordex.i18n"
 version = projectVersion
+
+application {
+	mainClass.set("dev.kordex.i18n.generator.MainKt.main")
+}
+
+tasks.jar {
+	manifest {
+		attributes(
+			"Main-Class" to "dev.kordex.i18n.generator.MainKt.main"
+		)
+	}
+}
 
 metadata {
 	name = "KordEx: i18n Class Generator"

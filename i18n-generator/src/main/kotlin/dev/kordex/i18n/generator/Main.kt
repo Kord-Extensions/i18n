@@ -81,6 +81,15 @@ public fun main(vararg args: String) {
 		)
 	}
 
+	spec.addOption<Boolean>("-in", "--internal") {
+		paramLabel("INTERNAL")
+		defaultValue("false")
+
+		description(
+			"Generate objects with internal visibility, rather than public."
+		)
+	}
+
 	val commandLine = CommandLine(spec)
 
 	commandLine.setExecutionStrategy(::run)
@@ -99,6 +108,7 @@ private fun run(result: CommandLine.ParseResult): Int {
 	val inputFile: File = result.matchedOption("i").getValue()
 	val classPackage: String = result.matchedOption("p").getValue()
 	val encoding: String = result.matchedOptionValue("e", "UTF-8")
+	val internal: Boolean = result.matchedOptionValue("in", false)
 
 	val className: String = result.matchedOptionValue("c", "Translations")
 	val outputDir: File = result.matchedOptionValue("o", File("output"))
@@ -135,6 +145,7 @@ private fun run(result: CommandLine.ParseResult): Int {
 		allProps = props,
 		className = className,
 		classPackage = classPackage,
+		publicVisibility = !internal
 	)
 
 	translationsClass.writeTo(outputDir)

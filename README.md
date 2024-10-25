@@ -28,6 +28,8 @@ To generate a translations class, create an instance of `TranslationsClass`, pas
 - `bundle`, the corresponding bundle name.
 - `className`, the name used by the generated class.
 - `classPackage`, the package containing the generated class.
+- `publicVisibility`, whether to generate objects with the `public` visibility modifier.
+  Defaults to `true`, will use `internal` if set to `false`.
 
 If you need to access the KotlinPoet `FileSpec` object, access it via the `spec` property.
 Otherwise, use the `writeTo(File)` function to write the generated class to a given directory, including the package
@@ -60,6 +62,7 @@ The tool will generate this class within a directory tree matching the given pac
 
 - `-c, --class-name = Translations` - Name for the generated root class.
 - `-e, --encoding = UTF-8` - Encoding used to read the input properties file.
+- `-in, --internal` - Generate objects with the `internal` visibility modifier instead of `public`.
 - `-o, --output-dir = ./output` - Output directory for the generated files.
 
 ### Other Parameters

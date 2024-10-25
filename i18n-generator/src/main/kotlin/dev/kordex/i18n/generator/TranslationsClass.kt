@@ -12,6 +12,7 @@ import com.hanggrian.kotlinpoet.buildFileSpec
 import com.hanggrian.kotlinpoet.buildPropertySpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import java.io.File
 import java.util.Properties
@@ -20,13 +21,20 @@ public class TranslationsClass(
 	public val allProps: Properties,
 	public val bundle: String,
 	public val className: String,
+	public val publicVisibility: Boolean = true,
 
 	classPackage: String
 ) {
+	public val visibility: KModifier = if (publicVisibility) {
+		KModifier.PUBLIC
+	} else {
+		KModifier.INTERNAL
+	}
 	public val allKeys: List<String> = allProps.toList().map { (left, _) -> left.toString() }
 
 	public val spec: FileSpec = buildFileSpec(classPackage, className) {
 		types.addObject(className) {
+			addModifiers(visibility)
 			bundle()
 
 			addKeys(allKeys, allProps, className)
@@ -39,6 +47,7 @@ public class TranslationsClass(
 
 	public fun key(name: String, value: String, property: String, translationsClassName: String): PropertySpec =
 		buildPropertySpec(name.replace("-", "_"), ClassName("dev.kordex.core.i18n.types", "Key")) {
+			addModifiers(visibility)
 			setInitializer("Key(%S)\n.withBundle(%L.bundle)", value, translationsClassName)
 
 			property.lines().forEach {
@@ -79,6 +88,7 @@ public class TranslationsClass(
 					.joinToString("")
 
 				types.addObject(objName) {
+					addModifiers(visibility)
 					addKeys(v, props, translationsClassName, keyName)
 				}
 			}
@@ -88,6 +98,7 @@ public class TranslationsClass(
 	public fun TypeSpecBuilder.bundle() {
 		properties.add(
 			buildPropertySpec("bundle", ClassName("dev.kordex.core.i18n.types", "Bundle")) {
+				addModifiers(visibility)
 				setInitializer("Bundle(%S)", bundle)
 			}
 		)

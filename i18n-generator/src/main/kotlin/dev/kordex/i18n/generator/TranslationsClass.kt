@@ -17,21 +17,50 @@ import com.squareup.kotlinpoet.PropertySpec
 import java.io.File
 import java.util.Properties
 
+/**
+ * Representation of a generated translations object.
+ *
+ * Usually, you can create an instance of this class and then immediately call [writeTo].
+ * Nothing else needs to be done for most use-cases.
+ *
+ * @param allProps Properties object containing your bundle's default translations, typically loaded from a properties
+ *                 file without a locale in its filename.
+ *
+ * @param bundle Name for your translation bundle, representing its location in your resources under `translations`.
+ *               For example, `core.strings` represents translations in `translations/core`, with the filenames
+ *               starting with `string.`.
+ *
+ * @param className Name given to the generated translations object. Defaults to `Translations`.
+ * @param classPackage Package to place the generated translations object in.
+ *
+ * @param publicVisibility Whether to use `public` (`true`) or `internal` (`false`) visibility modifiers in the
+ *                         generated code.
+ *                         Defaults to (`true`).
+ */
 public class TranslationsClass(
 	public val allProps: Properties,
 	public val bundle: String,
-	public val className: String,
+
+	public val className: String = "Translations",
 	public val publicVisibility: Boolean = true,
 
-	classPackage: String
+	public val classPackage: String
 ) {
+	/** KModifier represented by [publicVisibility]. **/
 	public val visibility: KModifier = if (publicVisibility) {
 		KModifier.PUBLIC
 	} else {
 		KModifier.INTERNAL
 	}
+
+	/** Flat list containing all translation keys in [allProps]. **/
 	public val allKeys: List<String> = allProps.toList().map { (left, _) -> left.toString() }
 
+	/**
+	 * KotlinPoet [FileSpec] representing the file being generated.
+	 *
+	 * The [TranslationsClass] fills this automatically, and it is complete as soon as you've created one.
+	 */
 	public val spec: FileSpec = buildFileSpec(classPackage, className) {
 		types.addObject(className) {
 			addModifiers(visibility)
@@ -41,16 +70,33 @@ public class TranslationsClass(
 		}
 	}
 
+	/**
+	 * Write the generated translations object to an output directory, generating interim directories for the
+	 * [classPackage] as necessary.
+	 *
+	 * You can usually call this immediately after creating your [TranslationsClass], unless you need to mess with the
+	 * [spec] first.
+	 *
+	 * @param outputDir [File] representing the output directory.
+	 */
 	public fun writeTo(outputDir: File) {
 		spec.writeTo(outputDir)
 	}
 
-	public fun key(name: String, value: String, property: String, translationsClassName: String): PropertySpec =
-		buildPropertySpec(name.replace("-", "_"), ClassName("dev.kordex.core.i18n.types", "Key")) {
+	/**
+	 * Generate a KotlinPoet [PropertySpec] representing a single translation key object.
+	 *
+	 * @param varName Variable name, normalised automatically.
+	 * @param keyName [String] representing the current translation key.
+	 * @param keyValue [String] representing the default translation for the current key.
+	 * @param translationsClassName [String] representing the name of the containing translations object.
+	 */
+	public fun key(varName: String, keyName: String, keyValue: String, translationsClassName: String): PropertySpec =
+		buildPropertySpec(varName, ClassName("dev.kordex.core.i18n.types", "Key")) {
 			addModifiers(visibility)
-			setInitializer("Key(%S)\n.withBundle(%L.bundle)", value, translationsClassName)
+			setInitializer("Key(%S)\n.withBundle(%L.bundle)", keyName, translationsClassName)
 
-			property.lines().forEach {
+			keyValue.lines().forEach {
 				kdoc.addStatement(
 					"%L",
 					it.trim().replace("*/", "")

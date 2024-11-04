@@ -90,6 +90,16 @@ public fun main(vararg args: String) {
 		)
 	}
 
+	spec.addOption<Boolean>("-ncc", "--no-camel-case") {
+		paramLabel("CAMEL CASE")
+		defaultValue("false")
+
+		description(
+			"Replace common delimiters in names with underscores instead of camel-casing them. " +
+				"This option is provided for compatibility, and will be removed in the future.."
+		)
+	}
+
 	val commandLine = CommandLine(spec)
 
 	commandLine.setExecutionStrategy(::run)
@@ -109,6 +119,7 @@ private fun run(result: CommandLine.ParseResult): Int {
 	val classPackage: String = result.matchedOption("p").getValue()
 	val encoding: String = result.matchedOptionValue("e", "UTF-8")
 	val internal: Boolean = result.matchedOptionValue("in", false)
+	val noCamelCase: Boolean = result.matchedOptionValue("ncc", false)
 
 	val className: String = result.matchedOptionValue("c", "Translations")
 	val outputDir: File = result.matchedOptionValue("o", File("output"))
@@ -141,11 +152,12 @@ private fun run(result: CommandLine.ParseResult): Int {
 	println("Generating class \"$className\" for bundle \"$bundle\"...")
 
 	val translationsClass = TranslationsClass(
-		bundle = bundle,
 		allProps = props,
+		bundle = bundle,
 		className = className,
+		publicVisibility = !internal,
+		splitToCamelCase = !noCamelCase,
 		classPackage = classPackage,
-		publicVisibility = !internal
 	)
 
 	translationsClass.writeTo(outputDir)

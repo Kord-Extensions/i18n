@@ -17,6 +17,8 @@ import com.squareup.kotlinpoet.PropertySpec
 import java.io.File
 import java.util.Properties
 
+public val DELIMITERS: Array<String> = arrayOf("_", "-", ".")
+
 /**
  * Representation of a generated translations object.
  *
@@ -36,6 +38,8 @@ import java.util.Properties
  * @param publicVisibility Whether to use `public` (`true`) or `internal` (`false`) visibility modifiers in the
  *                         generated code.
  *                         Defaults to (`true`).
+ *
+ * @param splitToCamelCase Whether to replace common delimiters in generated names
  */
 public class TranslationsClass(
 	public val allProps: Properties,
@@ -44,8 +48,26 @@ public class TranslationsClass(
 	public val className: String = "Translations",
 	public val publicVisibility: Boolean = true,
 
+	@Deprecated("This option is provided for compatibility with old code, and will be removed in a future version.")
+	public val splitToCamelCase: Boolean = true,
+
 	public val classPackage: String
 ) {
+
+	init {
+		@Suppress("DEPRECATION")
+		if (!splitToCamelCase) {
+			System.err.println("")
+
+			System.err.println(
+				"WARNING: Configured to replace delimiters with underscores instead of converting names to " +
+					"camel-case. This option will be removed in a future version."
+			)
+
+			System.err.println("")
+		}
+	}
+
 	/** KModifier represented by [publicVisibility]. **/
 	public val visibility: KModifier = if (publicVisibility) {
 		KModifier.PUBLIC
@@ -127,13 +149,7 @@ public class TranslationsClass(
 
 			if (v.isNotEmpty()) {
 				// Object
-				val objName = k
-					.replace("-", " ")
-					.split(" ")
-					.map { it.capitalized() }
-					.joinToString("")
-
-				types.addObject(objName) {
+				types.addObject(k.toClassName()) {
 					addModifiers(visibility)
 					addKeys(v, props, translationsClassName, keyName)
 				}
@@ -170,8 +186,28 @@ public class TranslationsClass(
 	public fun String.capitalized(): String =
 		replaceFirstChar { it.uppercase() }
 
-	public fun String.toVarName(): String =
-		replace("-", "_")
-			.replace(".", "_")
-			.replaceFirstChar { it.lowercase() }
+	@Suppress("DEPRECATION")
+	public fun String.toVarName(): String = let {
+		if (splitToCamelCase) {
+			toClassName()
+				.replaceFirstChar { it.lowercase() }
+		} else {
+			it.replace("-", "_")
+				.replace(".", "_")
+				.replaceFirstChar { it.lowercase() }
+		}
+	}
+
+	@Suppress("DEPRECATION", "SpreadOperator")
+	public fun String.toClassName(): String =
+		let {
+			if (splitToCamelCase) {
+				it.split(*DELIMITERS).joinToString("") { it.capitalized() }
+			} else {
+				it.replace("-", " ")
+					.split(" ")
+					.map { it.capitalized() }
+					.joinToString("")
+			}
+		}
 }

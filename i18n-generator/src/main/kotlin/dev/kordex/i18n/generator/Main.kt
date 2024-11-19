@@ -11,7 +11,7 @@ import picocli.CommandLine.Model.OptionSpec
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Files
-import java.util.Properties
+import java.util.*
 import kotlin.system.exitProcess
 
 public fun main(vararg args: String) {
@@ -60,6 +60,13 @@ public fun main(vararg args: String) {
 		defaultValue("Translations")
 
 		description("Generated class name. Defaults to \"Translations\".")
+	}
+
+	spec.addOption<Int>("-mfv", "--message-format-version") {
+		paramLabel("VERSION")
+		defaultValue("1")
+
+		description("ICU Message Format version. Defaults to version 1, but you may specify version 2 if needed.")
 	}
 
 	spec.addOption<String>("-e", "--encoding") {
@@ -120,9 +127,17 @@ private fun run(result: CommandLine.ParseResult): Int {
 	val encoding: String = result.matchedOptionValue("e", "UTF-8")
 	val internal: Boolean = result.matchedOptionValue("in", false)
 	val noCamelCase: Boolean = result.matchedOptionValue("ncc", false)
+	val messageFormatVersion: Int = result.matchedOptionValue("mfv", 1)
 
 	val className: String = result.matchedOptionValue("c", "Translations")
 	val outputDir: File = result.matchedOptionValue("o", File("output"))
+
+	if (messageFormatVersion !in MESSAGE_FORMAT_VERSIONS) {
+		exitError(
+			"Invalid message format version $messageFormatVersion - " +
+				"must be one of ${MESSAGE_FORMAT_VERSIONS.joinToString()}"
+		)
+	}
 
 	if ("." !in bundle) {
 		bundle = "$bundle.strings"
@@ -158,6 +173,7 @@ private fun run(result: CommandLine.ParseResult): Int {
 		publicVisibility = !internal,
 		splitToCamelCase = !noCamelCase,
 		classPackage = classPackage,
+		messageFormatVersion = messageFormatVersion,
 	)
 
 	translationsClass.writeTo(outputDir)

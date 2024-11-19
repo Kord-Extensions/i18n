@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@file:Suppress("StringLiteralDuplication")
+
 package dev.kordex.i18n.generator
 
 import com.hanggrian.kotlinpoet.TypeSpecBuilder
@@ -15,9 +17,10 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import java.io.File
-import java.util.Properties
+import java.util.*
 
 public val DELIMITERS: Array<String> = arrayOf("_", "-", ".")
+public val MESSAGE_FORMAT_VERSIONS: Array<Int> = arrayOf(1, 2)
 
 /**
  * Representation of a generated translations object.
@@ -51,9 +54,9 @@ public class TranslationsClass(
 	@Deprecated("This option is provided for compatibility with old code, and will be removed in a future version.")
 	public val splitToCamelCase: Boolean = true,
 
-	public val classPackage: String
+	public val classPackage: String,
+	public val messageFormatVersion: Int = 1,
 ) {
-
 	init {
 		@Suppress("DEPRECATION")
 		if (!splitToCamelCase) {
@@ -65,6 +68,13 @@ public class TranslationsClass(
 			)
 
 			System.err.println("")
+		}
+
+		if (messageFormatVersion !in MESSAGE_FORMAT_VERSIONS) {
+			error(
+				"Invalid message format version $messageFormatVersion - " +
+					"must be one of ${MESSAGE_FORMAT_VERSIONS.joinToString()}"
+			)
 		}
 	}
 
@@ -84,6 +94,10 @@ public class TranslationsClass(
 	 * The [TranslationsClass] fills this automatically, and it is complete as soon as you've created one.
 	 */
 	public val spec: FileSpec = buildFileSpec(classPackage, className) {
+		if (messageFormatVersion != 1) {
+			this.addImport("dev.kordex.core.i18n.types", "MessageFormatVersion")
+		}
+
 		types.addObject(className) {
 			addModifiers(visibility)
 			bundle()
@@ -132,9 +146,9 @@ public class TranslationsClass(
 		translationsClassName: String,
 		parent: String? = null,
 	) {
-		val paritioned = keys.partition()
+		val partitioned = keys.sorted().partition()
 
-		paritioned.forEach { (k, v) ->
+		partitioned.forEach { (k, v) ->
 			val keyName = if (parent != null) {
 				"$parent.$k"
 			} else {
@@ -161,7 +175,12 @@ public class TranslationsClass(
 		properties.add(
 			buildPropertySpec("bundle", ClassName("dev.kordex.core.i18n.types", "Bundle")) {
 				addModifiers(visibility)
-				setInitializer("Bundle(%S)", bundle)
+
+				if (messageFormatVersion != 1) {
+					setInitializer("Bundle(%S, %L)", bundle, messageFormatVersion.toMessageFormatEnum())
+				} else {
+					setInitializer("Bundle(%S)", bundle)
+				}
 			}
 		)
 	}
@@ -206,8 +225,17 @@ public class TranslationsClass(
 			} else {
 				it.replace("-", " ")
 					.split(" ")
-					.map { it.capitalized() }
-					.joinToString("")
+					.joinToString("") { it.capitalized() }
 			}
 		}
+
+	public fun Int.toMessageFormatEnum(): String = when (this) {
+		1 -> "MessageFormatVersion.ONE"
+		2 -> "MessageFormatVersion.TWO"
+
+		else -> error(
+			"Invalid message format version $this - " +
+				"must be one of ${MESSAGE_FORMAT_VERSIONS.joinToString()}"
+		)
+	}
 }

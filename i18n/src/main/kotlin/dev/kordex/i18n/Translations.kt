@@ -176,7 +176,7 @@ public object Translations {
 				// TODO: Try to remember why I did this - Relevant KordEx commit is 13d8843f (30th Jan 2022)
 
 				val baseCode = localeTag.split('-', '_').first()
-				val secondLocale = Locale.of(baseCode, baseCode)
+				val secondLocale = Locale(baseCode, baseCode)
 				val secondBundle = getResourceBundle(prefixedBundle, secondLocale)
 
 				val firstKey = firstBundle.keySet().first()

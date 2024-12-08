@@ -4,4 +4,5 @@ plugins {
 
 rootProject.name = "i18n"
 
+include("i18n")
 include("i18n-generator")

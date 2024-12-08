@@ -7,18 +7,31 @@
 package dev.kordex.i18n.registries
 
 import dev.kordex.i18n.Bundle
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 public object ClassLoaderRegistry {
+	private val logger: KLogger = KotlinLogging.logger { }
 	private val bundleCache = mutableMapOf<String, ClassLoader>()
 
 	public fun getForBundle(bundle: String): ClassLoader =
-		bundleCache.getOrPut(bundle) { ClassLoader.getSystemClassLoader() }
+		bundleCache[bundle] ?: ClassLoader.getSystemClassLoader()
 
-	public fun register(bundle: String, classLoader: ClassLoader) {
-		bundleCache.put(bundle, classLoader)
+	public fun getForBundle(bundle: Bundle): ClassLoader =
+		getForBundle(bundle.name)
+
+	public fun register(bundle: String, classLoader: ClassLoader): Boolean {
+		if (bundle !in bundleCache) {
+			bundleCache[bundle] = classLoader
+
+			logger.trace { "Registered classloader $classLoader for bundle $bundle" }
+
+			return true
+		}
+
+		return false
 	}
 
-	public fun register(bundle: Bundle) {
-		bundleCache.put(bundle.name, bundle.classLoader)
-	}
+	public fun register(bundle: Bundle): Boolean =
+		register(bundle.name, bundle.classLoader)
 }

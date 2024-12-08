@@ -9,8 +9,11 @@ package dev.kordex.i18n.registries
 import dev.kordex.i18n.messages.MessageFormat
 import dev.kordex.i18n.messages.formats.ICUFormatV1
 import dev.kordex.i18n.messages.formats.ICUFormatV2
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 public object MessageFormatRegistry {
+	private val logger: KLogger = KotlinLogging.logger { }
 	private val formats: MutableMap<String, MessageFormat> = mutableMapOf()
 
 	init {
@@ -27,5 +30,7 @@ public object MessageFormatRegistry {
 
 	public fun register(format: MessageFormat) {
 		formats[format.identifier] = format
+
+		logger.trace { "Registered message format \"${format.identifier}\" - $format" }
 	}
 }

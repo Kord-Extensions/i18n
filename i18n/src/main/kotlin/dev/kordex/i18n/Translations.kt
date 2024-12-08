@@ -17,26 +17,26 @@ public object Translations {
 	private val bundleLocaleCache: MutableMap<Pair<String, Locale>, ResourceBundle> = mutableMapOf()
 
 	/** Check whether the given [Key] exists. **/
-	public fun hasKey(key: Key): Boolean {
-		val (key, bundle, locale) = key
+	public fun hasKey(keyObj: Key): Boolean {
+		val (key, bundle, locale) = keyObj
 
 		return try {
-			val (bundle, _) = getBundles(
+			val (rootBundle, _) = getBundles(
 				bundle ?: I18n.defaultBundle,
 				locale ?: I18n.defaultLocale,
 			)
 
-			bundle.keySet().contains(key)
+			rootBundle.keySet().contains(key)
 		} catch (e: MissingResourceException) {
-			logger.trace(e) { "Failed to get $bundle for locale $locale" }
+			logger.trace(e) { "Failed to find $key" }
 
 			false
 		}
 	}
 
 	/** Get the untranslated string for the given [Key]. **/
-	public fun get(key: Key): String {
-		val (key, bundle, locale) = key
+	public fun get(keyObj: Key): String {
+		val (key, bundle, locale) = keyObj
 
 		val (baseBundle, overrideBundle) = getBundles(
 			bundle ?: I18n.defaultBundle,
@@ -144,6 +144,7 @@ public object Translations {
 			bundle.getResourceBundleControl()
 		)
 
+	@Suppress("DEPRECATION")  // Locale constructor, for compatibility with Java versions older than 19.
 	private fun getBundles(bundle: Bundle, locale: Locale): Pair<ResourceBundle, ResourceBundle?> {
 		// First, let's make sure the bundle is valid. If these throw, it isn't valid.
 		bundle.getResourceBundleControl()

@@ -25,6 +25,10 @@ public data class Bundle(
 	@Transient
 	val classLoader: ClassLoader = ClassLoaderRegistry.getForBundle(name),
 ) {
+	init {
+		ClassLoaderRegistry.register(this)
+	}
+
 	public fun getResourceBundleControl(): ResourceBundle.Control =
 		FileFormatRegistry.getOrError(fileFormat)
 

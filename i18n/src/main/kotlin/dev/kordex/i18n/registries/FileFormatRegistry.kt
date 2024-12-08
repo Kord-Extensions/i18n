@@ -8,9 +8,12 @@ package dev.kordex.i18n.registries
 
 import dev.akkinoc.util.YamlResourceBundle
 import dev.kordex.i18n.files.PropertiesControl
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.util.ResourceBundle
 
 public object FileFormatRegistry {
+	private val logger: KLogger = KotlinLogging.logger { }
 	private val formats: MutableMap<String, ResourceBundle.Control> = mutableMapOf()
 
 	init {
@@ -27,5 +30,7 @@ public object FileFormatRegistry {
 
 	public fun register(identifier: String, control: ResourceBundle.Control) {
 		formats[identifier] = control
+
+		logger.trace { "Registered file format \"$identifier\" to control $control" }
 	}
 }

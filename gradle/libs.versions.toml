@@ -4,7 +4,7 @@ kx-ser = "1.7.3"
 logging = "7.0.0"
 slf4j = "2.0.16"
 
-kotest = "5.9"
+kotest = "5.9.1"
 
 yaml-resource-bundle = "2.13.0"
 

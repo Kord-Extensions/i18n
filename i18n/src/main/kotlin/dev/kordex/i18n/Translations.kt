@@ -125,6 +125,7 @@ public object Translations {
 				buildString {
 					appendLine("Unable to find translation for ${key.key} in bundles:")
 
+					@Suppress("KotlinConstantConditions")
 					if (key.bundle != null) {
 						appendLine("\t${key.bundle}")
 					}
@@ -140,11 +141,9 @@ public object Translations {
 	private fun getResourceBundle(bundle: Bundle, locale: Locale): ResourceBundle {
 		val baseName = bundle.name.replace(".", "/")
 		val control = bundle.getResourceBundleControl()
-		val format = control.getFormats(baseName)
-			.map { it.split(".").last() }
-			.first { it != "class" }
 
-		val bundlePath = "$baseName.$format"
+		val formats = control.getFormats(baseName)
+			.map { it.split(".").last() }
 
 		val classLoaders: MutableList<Pair<String, ClassLoader>> = mutableListOf(
 			"bundle" to bundle.classLoader,
@@ -160,20 +159,27 @@ public object Translations {
 			"Searching for $bundle with locale ${locale.toLanguageTag()} in ${classLoaders.size} class-loaders"
 		}
 
-		for ((name, loader) in classLoaders) {
-			logger.trace { "Searching in class-loader $name" }
+		for (format in formats) {
+			val bundlePath = "$baseName.$format"
 
-			try {
-				if (loader.getResource(bundlePath) != null) {
-					val result = ResourceBundle.getBundle(bundle.name, locale, loader, control)
+			for ((name, loader) in classLoaders) {
+				logger.trace { "Searching for $bundlePath with format '$format' in '$name' class-loader" }
 
-					logger.debug { "Found $bundle with locale ${locale.toLanguageTag()} in $name class-loader" }
+				try {
+					if (loader.getResource(bundlePath) != null) {
+						val result = ResourceBundle.getBundle(bundle.name, locale, loader, control)
 
-					return result
+						logger.debug {
+							"Found $bundle with locale ${locale.toLanguageTag()} and format '$format' in '$name' " +
+								"class-loader"
+						}
+
+						return result
+					}
+				} catch (_: MissingResourceException) {
+					// Do nothing, move on to the next loader.
+					continue
 				}
-			} catch (_: MissingResourceException) {
-				// Do nothing, move on to the next loader.
-				continue
 			}
 		}
 

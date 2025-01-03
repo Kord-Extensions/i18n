@@ -27,8 +27,11 @@ dependencies {
 	api(libs.kx.ser)
 
 	testImplementation(libs.bundles.testing)
+	testImplementation(libs.slf4j.simple)
 }
 
 tasks.withType<Test>().configureEach {
 	useJUnitPlatform()
+
+	systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
 }

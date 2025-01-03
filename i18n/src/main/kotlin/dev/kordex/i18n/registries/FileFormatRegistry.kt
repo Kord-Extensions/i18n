@@ -18,7 +18,9 @@ public object FileFormatRegistry {
 
 	init {
 		register("properties", PropertiesControl)
+
 		register("yaml", YamlResourceBundle.Control)
+		register("yml", YamlResourceBundle.Control)
 	}
 
 	public fun get(identifier: String): ResourceBundle.Control? =
@@ -32,5 +34,15 @@ public object FileFormatRegistry {
 		formats[identifier] = control
 
 		logger.trace { "Registered file format \"$identifier\" to control $control" }
+	}
+
+	public fun unregister(identifier: String): ResourceBundle.Control? {
+		val result = formats.remove(identifier)
+
+		if (result != null) {
+			logger.trace { "Unregistered file format \"$identifier\", was $result" }
+		}
+
+		return result
 	}
 }

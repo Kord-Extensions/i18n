@@ -4,7 +4,7 @@ kx-ser = "1.7.3"
 logging = "7.0.0"
 slf4j = "2.0.16"
 
-kotest = "5.9"
+kotest = "5.9.1"
 
 yaml-resource-bundle = "2.13.0"
 
@@ -13,6 +13,7 @@ icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 kx-ser = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kx-ser" }
 kotlin-logging = { module = "io.github.oshai:kotlin-logging", version.ref = "logging" }
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-framework = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }

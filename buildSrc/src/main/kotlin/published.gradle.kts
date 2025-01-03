@@ -8,7 +8,7 @@ plugins {
 }
 
 val sourceJar: Task by tasks.getting
-//val javadocJar: Task by tasks.getting
+val javadocJar: Task by tasks.getting
 //val dokkaJar: Task by tasks.getting
 
 afterEvaluate {

@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@file:Suppress("DEPRECATION")
+
 package tests
 
 import dev.kordex.i18n.Bundle
@@ -20,11 +22,11 @@ class TranslationsTests : FunSpec({
 
 	test("full stack test with generated objects") {
 		val english = TestTranslations.Command.banana
-			.withLocale(Locale.of("en"))
+			.withLocale(Locale("en"))
 			.translate()
 
 		val german = TestTranslations.Command.banana
-			.withLocale(Locale.of("de"))
+			.withLocale(Locale("de"))
 			.translate()
 
 		assert(english == "banana") { "Incorrect English translation returned - expected 'banana', got '$english'" }
@@ -35,11 +37,11 @@ class TranslationsTests : FunSpec({
 		val correctEnglish = "Command check did not pass."
 
 		val english = TestTranslations.Check.simple
-			.withLocale(Locale.of("en"))
+			.withLocale(Locale("en"))
 			.translate()
 
 		val german = TestTranslations.Check.simple
-			.withLocale(Locale.of("de"))
+			.withLocale(Locale("de"))
 			.translate()
 
 		assert(english == "Command check did not pass.") {
@@ -55,7 +57,7 @@ class TranslationsTests : FunSpec({
 		val baseKey = Key("wrong.key", TestTranslations.bundle)
 
 		val english = baseKey
-			.withLocale(Locale.of("en"))
+			.withLocale(Locale("en"))
 			.translate()
 
 		assert(english == baseKey.key) {

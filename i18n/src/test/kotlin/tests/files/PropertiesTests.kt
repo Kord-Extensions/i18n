@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+@file:Suppress("DEPRECATION")
+
 package tests.files
 
 import dev.kordex.i18n.files.PropertiesControl
@@ -26,13 +28,13 @@ class PropertiesTests : FunSpec({
 	test("loads base file") {
 		val englishResourceBundle = ResourceBundle.getBundle(
 			TestConstants.prefixedBundle,
-			Locale.of("en"),
+			Locale("en"),
 			PropertiesControl
 		)
 
 		val germanResourceBundle = ResourceBundle.getBundle(
 			TestConstants.prefixedBundle,
-			Locale.of("de"),
+			Locale("de"),
 			PropertiesControl
 		)
 

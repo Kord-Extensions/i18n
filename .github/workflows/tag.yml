@@ -55,6 +55,14 @@ jobs:
 
           TOKEN: "${{ secrets.TOKEN }}"
 
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v5
+
+        if: success() || failure()
+
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
       - name: Create release description
         run: kotlin .github/tag.main.kts
 

@@ -8,6 +8,8 @@ on:
 permissions:
   contents: write
   id-token: write
+  checks: write
+  pull-requests: write
 
 jobs:
   build:
@@ -52,6 +54,9 @@ jobs:
 
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
+
+          include_passed: true
+          detailed_summary: true
 
       - name: Upload JARs
         uses: actions/upload-artifact@v4

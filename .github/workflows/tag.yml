@@ -1,5 +1,9 @@
 name: Release Tag
 
+permissions:
+  checks: write
+  pull-requests: write
+
 on:
   push:
     tags:
@@ -62,6 +66,9 @@ jobs:
 
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
+
+          include_passed: true
+          detailed_summary: true
 
       - name: Create release description
         run: kotlin .github/tag.main.kts

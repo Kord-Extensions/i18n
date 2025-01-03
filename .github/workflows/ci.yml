@@ -1,5 +1,9 @@
 name: CI (PRs/branches)
 
+permissions:
+  checks: write
+  pull-requests: write
+
 on:
   push:
     branches-ignore:
@@ -43,6 +47,10 @@ jobs:
 
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
+
+          include_passed: true
+          detailed_summary: true
+          comment: true
 
       - name: Upload JARs
         uses: actions/upload-artifact@v4

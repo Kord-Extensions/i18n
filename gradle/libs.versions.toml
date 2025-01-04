@@ -4,7 +4,7 @@ kotlin = "2.0.21"
 icu4j = "76.1"
 ktlint = "1.5.0"
 kx-ser = "1.7.3"
-logging = "7.0.0"
+logging = "7.0.3"
 slf4j = "2.0.16"
 
 kotest = "5.9.1"

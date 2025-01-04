@@ -240,7 +240,7 @@ private fun run(result: CommandLine.ParseResult): Int {
 
 	val resourceBundle = ResourceBundle.getBundle(
 		bundle.replace(".", "/"),
-		Locale.of("dummy"),
+		Locale("dummy"),
 		loader,
 		fileFormatObj.control,
 	)

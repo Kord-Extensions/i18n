@@ -6,43 +6,58 @@
 
 package dev.kordex.i18n.registries
 
-import dev.akkinoc.util.YamlResourceBundle
-import dev.kordex.i18n.files.PropertiesControl
+import dev.kordex.i18n.files.FileFormat
+import dev.kordex.i18n.files.PropertiesFormat
+import dev.kordex.i18n.files.YamlFormat
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.util.ResourceBundle
 
 public object FileFormatRegistry {
 	private val logger: KLogger = KotlinLogging.logger { }
-	private val formats: MutableMap<String, ResourceBundle.Control> = mutableMapOf()
+	private val formats: MutableMap<String, FileFormat> = mutableMapOf()
 
 	init {
-		register("properties", PropertiesControl)
-
-		register("yaml", YamlResourceBundle.Control)
-		register("yml", YamlResourceBundle.Control)
+		register(PropertiesFormat)
+ 		register(YamlFormat)
 	}
 
-	public fun get(identifier: String): ResourceBundle.Control? =
+	public fun get(identifier: String): FileFormat? =
 		formats[identifier]
 
-	public fun getOrError(identifier: String): ResourceBundle.Control =
+	public fun getOrError(identifier: String): FileFormat =
 		formats[identifier]
 			?: error("Unknown file format: $identifier")
 
-	public fun register(identifier: String, control: ResourceBundle.Control) {
-		formats[identifier] = control
+	public fun register(format: FileFormat) {
+		format.identifiers.forEach { identifier ->
+			formats[identifier] = format
+		}
 
-		logger.trace { "Registered file format \"$identifier\" to control $control" }
+		logger.trace { "Registered file format: $format (${format.identifiers.joinToString()})" }
 	}
 
-	public fun unregister(identifier: String): ResourceBundle.Control? {
+	public fun unregister(identifier: String): FileFormat? {
 		val result = formats.remove(identifier)
 
 		if (result != null) {
-			logger.trace { "Unregistered file format \"$identifier\", was $result" }
+			logger.trace { "Unregistered file format for identifier \"$identifier\", was $result" }
 		}
 
 		return result
 	}
+
+	public fun unregister(format: FileFormat): Map<String, FileFormat?> {
+		val result = format.identifiers.associateWith { identifier ->
+			formats.remove(identifier)
+		}.filterValues { it != null }
+
+		if (result.isNotEmpty()) {
+			logger.trace { "Couldn't remove non-registered file format: $format" }
+		}
+
+		return result
+	}
+
+	public fun getFormats(): MutableSet<String> =
+		formats.keys
 }

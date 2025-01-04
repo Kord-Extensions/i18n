@@ -36,9 +36,13 @@ repositories {
 
 dependencies {
     implementation("info.picocli:picocli:4.7.6")
+	implementation(libs.kotlin.reflect)
+	implementation(libs.slf4j.simple)
 
     api("com.hanggrian:kotlinpoet-dsl:0.2")
     api("com.squareup:kotlinpoet:1.18.1")
+	api(libs.bundles.ktlint)
+	api(project(":i18n"))
 }
 
 val propsTask = tasks.register<WriteProperties>("kordExProps") {

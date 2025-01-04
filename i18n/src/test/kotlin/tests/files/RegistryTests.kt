@@ -6,28 +6,34 @@
 
 package tests.files
 
-import dev.akkinoc.util.YamlResourceBundle
-import dev.kordex.i18n.files.PropertiesControl
+import dev.kordex.i18n.files.FileFormat
+import dev.kordex.i18n.files.PropertiesFormat
+import dev.kordex.i18n.files.YamlFormat
 import dev.kordex.i18n.registries.FileFormatRegistry
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.mpp.log
 import org.junit.jupiter.api.assertThrows
-import java.lang.IllegalStateException
+import java.util.*
 
 class RegistryTests : FunSpec({
+	val customFormat = object : FileFormat {
+		override val identifiers: Set<String> = setOf("test")
+		override val control: ResourceBundle.Control = PropertiesFormat.control
+	}
+
 	beforeTest {
 		if (it.name.originalName == "functional registration") {
-			log { "Registering file format with identifier 'test'" }
+			log { "Registering file format with identifiers: ${customFormat.identifiers.joinToString()}" }
 
-			FileFormatRegistry.register("test", PropertiesControl)
+			FileFormatRegistry.register(customFormat)
 		}
 	}
 
 	afterTest {
 		if (it.a.name.originalName == "functional registration") {
-			log { "Unregistering file format with identifier 'test'" }
+			log { "Unregistering file format with identifiers: ${customFormat.identifiers.joinToString()}" }
 
-			FileFormatRegistry.unregister("test")
+			FileFormatRegistry.unregister(customFormat)
 		}
 	}
 
@@ -36,16 +42,16 @@ class RegistryTests : FunSpec({
 		val yamlControlShort = FileFormatRegistry.get("yml")
 		val yamlControlLong = FileFormatRegistry.get("yaml")
 
-		assert(propertiesControl == PropertiesControl) {
-			"Incorrect control returned - expected `PropertiesControl`, got $propertiesControl"
+		assert(propertiesControl == PropertiesFormat) {
+			"Incorrect control returned - expected `PropertiesFormat`, got $propertiesControl"
 		}
 
-		assert(yamlControlShort == YamlResourceBundle.Control) {
-			"Incorrect control returned - expected `YamlResourceBundle.Control`, got $propertiesControl"
+		assert(yamlControlShort == YamlFormat) {
+			"Incorrect control returned - expected `YamlFormat`, got $propertiesControl"
 		}
 
-		assert(yamlControlLong == YamlResourceBundle.Control) {
-			"Incorrect control returned - expected `YamlResourceBundle.Control`, got $propertiesControl"
+		assert(yamlControlLong == YamlFormat) {
+			"Incorrect control returned - expected `YamlFormat`, got $propertiesControl"
 		}
 	}
 
@@ -66,8 +72,8 @@ class RegistryTests : FunSpec({
 	test("functional registration") {
 		val propertiesControl = FileFormatRegistry.get("test")
 
-		assert(propertiesControl == PropertiesControl) {
-			"Incorrect control returned - expected `PropertiesControl`, got $propertiesControl"
+		assert(propertiesControl == customFormat) {
+			"Incorrect control returned - expected `customFormat`, got $propertiesControl"
 		}
 	}
 })

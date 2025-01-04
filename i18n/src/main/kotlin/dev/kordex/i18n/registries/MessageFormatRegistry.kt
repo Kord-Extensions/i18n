@@ -33,4 +33,7 @@ public object MessageFormatRegistry {
 
 		logger.trace { "Registered message format \"${format.identifier}\" - $format" }
 	}
+
+	public fun getFormats(): MutableSet<String> =
+		formats.keys
 }

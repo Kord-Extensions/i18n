@@ -1,46 +1,55 @@
-import org.gradle.kotlin.dsl.from
-import kotlin.text.get
-import kotlin.text.set
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
 	`maven-publish`
 	signing
+
+	id("com.vanniktech.maven.publish.base")
 }
 
-val sourceJar: Task by tasks.getting
-val javadocJar: Task by tasks.getting
-//val dokkaJar: Task by tasks.getting
+val isSnapshot = project.version.toString().contains("SNAPSHOT")
+val isTag = (project.findProperty("publishingTag") as String?) == "true"
 
 afterEvaluate {
 	publishing {
 		repositories {
 			maven {
-				name = "KordEx"
+				name = "kordEx"
 
-				url = if (project.version.toString().contains("SNAPSHOT")) {
+				url = if (isSnapshot) {
 					uri("https://repo.kordex.dev/snapshots/")
 				} else {
 					uri("https://repo.kordex.dev/releases/")
 				}
 
 				credentials {
-					username = project.findProperty("ossrhUsername") as String?
+					username = project.findProperty("kordexMavenUsername") as String?
 						?: System.getenv("KORDEX_MAVEN_USERNAME")
 
-					password = project.findProperty("ossrhPassword") as String?
+					password = project.findProperty("kordexMavenPassword") as String?
 						?: System.getenv("KORDEX_MAVEN_PASSWORD")
 				}
 
 				version = project.version
 			}
-		}
 
-		publications {
-			create<MavenPublication>("maven") {
-				from(components.getByName("java"))
+			mavenPublishing {
+				if (isTag && !isSnapshot) {
+					publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
+				}
 
-				artifact(sourceJar)
-//				artifact(javadocJar)
+				configure(
+					KotlinJvm(
+						javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
+						sourcesJar = true
+					)
+				)
+
+				signAllPublications()
+
+				coordinates(project.group.toString(), project.name, project.version.toString())
 
 				pom {
 					name.set(project.ext.get("pubName").toString())
@@ -81,5 +90,28 @@ afterEvaluate {
 		useInMemoryPgpKeys(signingKey, signingPassword)
 
 		sign(publishing.publications["maven"])
+	}
+}
+
+afterEvaluate {
+	project.publishing.publications.forEach { publication ->
+		if (publication is MavenPublication) {
+			println(">> Publication: ${publication.groupId}:${publication.artifactId}:${publication.version}")
+
+			println(
+				"   Classifiers: " +
+					publication.artifacts
+						.filter { artifact -> artifact.classifier != null }
+						.sortedBy { it.classifier }
+						.joinToString { it -> "${it.classifier}:${it.extension}" }
+			)
+
+			println(
+				"   Repos: " +
+					project.publishing.repositories
+						.sortedBy { it.name }
+						.joinToString { it.name }
+			)
+		}
 	}
 }

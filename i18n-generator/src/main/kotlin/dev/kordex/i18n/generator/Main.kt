@@ -6,15 +6,87 @@
 
 package dev.kordex.i18n.generator
 
+import dev.kordex.i18n.files.FileFormat
+import dev.kordex.i18n.files.PropertiesFormat
+import dev.kordex.i18n.messages.MessageFormat
+import dev.kordex.i18n.messages.formats.ICUFormatV1
+import dev.kordex.i18n.registries.FileFormatRegistry
+import dev.kordex.i18n.registries.MessageFormatRegistry
 import picocli.CommandLine
 import picocli.CommandLine.Model.OptionSpec
 import java.io.File
-import java.nio.charset.Charset
-import java.nio.file.Files
+import java.net.URLClassLoader
+import java.nio.file.Path
 import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.full.createInstance
 import kotlin.system.exitProcess
 
+public val extraFileFormats: List<String> = (
+	System.getProperties()["fileFormats"]
+		?: System.getenv()["FILE_FORMATS"]
+	)
+	?.toString()
+	?.split(',')
+	?: emptyList()
+
+public val extraMessageFormats: List<String> = (
+	System.getProperties()["messageFormats"]
+		?: System.getenv()["MESSAGE_FORMATS"]
+	)
+	?.toString()
+	?.split(',')
+	?: emptyList()
+
 public fun main(vararg args: String) {
+	if (extraFileFormats.isNotEmpty()) {
+		println("Loading ${extraFileFormats.size} extra file format/s...")
+
+		extraFileFormats.forEach { specifier ->
+			try {
+				@Suppress("UNCHECKED_CAST")
+				val clazz = Class.forName(specifier).kotlin as KClass<out FileFormat>
+
+				val obj = clazz.objectInstance
+					?: clazz.createInstance()
+
+				FileFormatRegistry.register(obj)
+
+				println("\t$specifier -> Loaded successfully")
+			} catch (_: ClassNotFoundException) {
+				println("\t$specifier -> Failed: Type not found, perhaps try appending 'Kt'")
+			} catch (_: ClassCastException) {
+				println("\t$specifier -> Failed: Type doesn't extend FileFormat")
+			}
+		}
+
+		println()
+	}
+
+	if (extraMessageFormats.isNotEmpty()) {
+		println("Loading ${extraMessageFormats.size} extra message format/s...")
+
+		extraMessageFormats.forEach { specifier ->
+			try {
+				@Suppress("UNCHECKED_CAST")
+				val clazz = Class.forName(specifier).kotlin as KClass<out MessageFormat>
+
+				val obj = clazz.objectInstance
+					?: clazz.createInstance()
+
+				MessageFormatRegistry.register(obj)
+
+				println("\t$specifier -> Loaded successfully")
+			} catch (_: ClassNotFoundException) {
+				println("\t$specifier -> Failed: Type not found, perhaps try appending 'Kt'")
+			} catch (_: ClassCastException) {
+				println("\t$specifier -> Failed: Type doesn't extend FileFormat")
+			}
+		}
+
+		println()
+	}
+
 	val spec = CommandLine.Model.CommandSpec.create()
 
 	spec.name("i18n-generator")
@@ -26,10 +98,23 @@ public fun main(vararg args: String) {
 
 	spec.usageMessage()
 		.description(
-			"%nCommand-line tool for generating Kord Extensions translations classes from translation bundle " +
-				"properties files.%n"
+			"%nCommand-line tool for generating translations classes from translation bundle files.%n",
+
+			"Use '-DfileFormats' or the 'FILE_FORMATS' environmental variable to specify third-party file formats, " +
+				"represented by a comma-delimited list of fully-qualified names.%n",
+			"Use '-DmessageFormats' or the 'MESSAGE_FORMATS' environmental variable to specify third-party message " +
+				"formats, represented by a comma-delimited list of fully-qualified names.%n",
+
+			"All specified file formats must implement the FileFormat type, and message formats must implement the " +
+				"MessageFormat type. For more information, please see the documentation.%n",
+
+			"Lists of available file formats and message formats can be found at the bottom of this " +
+				"help message. %n"
 		)
-		.footer("%nAvailable encodings: " + Charset.availableCharsets().keys.joinToString())
+		.footer(
+			"%nAvailable file formats: " + FileFormatRegistry.getFormats().sorted().joinToString(),
+			"Available message formats: " + MessageFormatRegistry.getFormats().sorted().joinToString()
+		)
 
 	spec.version(null)
 	spec.mixinStandardHelpOptions(true)
@@ -41,11 +126,19 @@ public fun main(vararg args: String) {
 		description("Name of the relevant translations bundle, which will be included in the output.")
 	}
 
-	spec.addOption<File>("-i", "--input-file") {
+	spec.addOption<File>("-i", "--input-path") {
 		paramLabel("INPUT")
 		required(true)
 
-		description("Input file, a properties file representing a set of translations from a translation bundle.")
+		description(
+			"Input path, pointing to the directory containing your translation bundle, " +
+				"relative to the bundle you specified. For example, if your bundle is 'kordex.strings' and you're " +
+				"using the 'properties' file format, you should provide the path to a directory containing " +
+				"'kordex/strings.properties'.",
+			"",
+			"In most situations, this should be the 'translations' directory in your project's " +
+				"'src/main/resources' directory."
+		)
 	}
 
 	spec.addOption<String>("-p", "--class-package") {
@@ -62,20 +155,29 @@ public fun main(vararg args: String) {
 		description("Generated class name. Defaults to \"Translations\".")
 	}
 
-	spec.addOption<Int>("-mfv", "--message-format-version") {
-		paramLabel("VERSION")
-		defaultValue("1")
+	spec.addOption<String>("-f", "--file-format") {
+		paramLabel("FILE-FORMAT")
+		defaultValue("properties")
 
-		description("ICU Message Format version. Defaults to version 1, but you may specify version 2 if needed.")
+		description(
+			"Translations file format identifier. Defaults to '${PropertiesFormat.identifiers.first()}'."
+		)
 	}
 
-	spec.addOption<String>("-e", "--encoding") {
-		paramLabel("ENCODING")
-		defaultValue("UTF-8")
+	spec.addOption<String>("-m", "--message-format") {
+		paramLabel("MESSAGE-FORMAT")
+		defaultValue(ICUFormatV1.identifier)
 
-		Charset.availableCharsets().keys
+		description(
+			"Message format identifier. Defaults to ${ICUFormatV1.identifier}."
+		)
+	}
 
-		description("Character encoding used to load the bundle file. Defaults to UTF-8.")
+	spec.addOption<File>("--editorconfig") {
+		paramLabel("PATH")
+		defaultValue(".editorconfig")
+
+		description("Path to a .editorconfig file to use when formatting generated code. Defaults to '.editorconfig'.")
 	}
 
 	spec.addOption<File>("-o", "--output-dir") {
@@ -97,16 +199,6 @@ public fun main(vararg args: String) {
 		)
 	}
 
-	spec.addOption<Boolean>("-ncc", "--no-camel-case") {
-		paramLabel("CAMEL CASE")
-		defaultValue("false")
-
-		description(
-			"Replace common delimiters in names with underscores instead of camel-casing them. " +
-				"This option is provided for compatibility, and will be removed in the future.."
-		)
-	}
-
 	val commandLine = CommandLine(spec)
 
 	commandLine.setExecutionStrategy(::run)
@@ -122,29 +214,18 @@ private fun run(result: CommandLine.ParseResult): Int {
 	}
 
 	var bundle: String = result.matchedOption("b").getValue()
-	val inputFile: File = result.matchedOption("i").getValue()
+	val inputPath: File = result.matchedOption("i").getValue()
 	val classPackage: String = result.matchedOption("p").getValue()
-	val encoding: String = result.matchedOptionValue("e", "UTF-8")
 	val internal: Boolean = result.matchedOptionValue("in", false)
-	val noCamelCase: Boolean = result.matchedOptionValue("ncc", false)
-	val messageFormatVersion: Int = result.matchedOptionValue("mfv", 1)
+	val fileFormat: String = result.matchedOptionValue("f", PropertiesFormat.identifiers.first())
+	val messageFormat: String = result.matchedOptionValue("m", ICUFormatV1.identifier)
+	val editorConfig: File = result.matchedOptionValue("editorconfig", File(".editorconfig"))
 
 	val className: String = result.matchedOptionValue("c", "Translations")
 	val outputDir: File = result.matchedOptionValue("o", File("output"))
 
-	if (messageFormatVersion !in MESSAGE_FORMAT_VERSIONS) {
-		exitError(
-			"Invalid message format version $messageFormatVersion - " +
-				"must be one of ${MESSAGE_FORMAT_VERSIONS.joinToString()}"
-		)
-	}
-
-	if ("." !in bundle) {
-		bundle = "$bundle.strings"
-	}
-
-	if (!inputFile.exists()) {
-		exitError("Unable to find ${inputFile.absolutePath}")
+	if (!inputPath.exists()) {
+		exitError("Unable to find ${inputPath.absolutePath}")
 	}
 
 	if (!outputDir.exists()) {
@@ -152,28 +233,30 @@ private fun run(result: CommandLine.ParseResult): Int {
 		outputDir.mkdirs()
 	}
 
-	println("Loading properties...")
+	println("Loading translations...")
 
-	val props = Properties()
+	val fileFormatObj = FileFormatRegistry.getOrError(fileFormat)
+	val loader = URLClassLoader(arrayOf(inputPath.toURI().toURL()))
 
-	props.load(
-		Files.newBufferedReader(
-			inputFile.toPath(),
-			charset(encoding)
-		)
+	val resourceBundle = ResourceBundle.getBundle(
+		bundle.replace(".", "/"),
+		Locale.of("dummy"),
+		loader,
+		fileFormatObj.control,
 	)
 
-	println("Found ${props.size} translation keys.")
+	println("Found ${resourceBundle.keys.toList().size} translation keys.")
 	println("Generating class \"$className\" for bundle \"$bundle\"...")
 
 	val translationsClass = TranslationsClass(
-		allProps = props,
+		resourceBundle = resourceBundle,
 		bundle = bundle,
 		className = className,
 		publicVisibility = !internal,
-		splitToCamelCase = !noCamelCase,
 		classPackage = classPackage,
-		messageFormatVersion = messageFormatVersion,
+		fileFormat = FileFormatRegistry.getOrError(fileFormat),
+		messageFormat = messageFormat,
+		editorConfig = Path.of(editorConfig.toURI())
 	)
 
 	translationsClass.writeTo(outputDir)

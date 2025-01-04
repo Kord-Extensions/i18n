@@ -1,5 +1,8 @@
 [versions]
+kotlin = "2.0.21"
+
 icu4j = "76.1"
+ktlint = "1.5.0"
 kx-ser = "1.7.3"
 logging = "7.0.0"
 slf4j = "2.0.16"
@@ -12,6 +15,12 @@ yaml-resource-bundle = "2.13.0"
 icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 kx-ser = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kx-ser" }
 kotlin-logging = { module = "io.github.oshai:kotlin-logging", version.ref = "logging" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+ktlint-engine = { module = "com.pinterest.ktlint:ktlint-rule-engine", version.ref = "ktlint" }
+ktlint-cli-rules = { module = "com.pinterest.ktlint:ktlint-cli-ruleset-core", version.ref = "ktlint" }
+ktlint-rules = { module = "com.pinterest.ktlint:ktlint-ruleset-standard", version.ref = "ktlint" }
+
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
@@ -22,6 +31,7 @@ kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest"
 yaml-resource-bundle = { module = "dev.akkinoc.util:yaml-resource-bundle", version.ref = "yaml-resource-bundle" }
 
 [bundles]
+ktlint = ["ktlint-engine", "ktlint-cli-rules", "ktlint-rules"]
 logging = ["kotlin-logging", "slf4j"]
 resources = ["yaml-resource-bundle"]
 testing = ["kotest-assertions", "kotest-framework", "kotest-property"]

@@ -53,6 +53,9 @@ jobs:
         env:
           ORG_GRADLE_PROJECT_signingKey: "${{ secrets.GPG_KEY }}"
           ORG_GRADLE_PROJECT_signingPassword: "${{ secrets.GPG_PASSWORD }}"
+          ORG_GRADLE_PROJECT_mavenCentralUsername: "${{ secrets.MAVEN_CENTRAL_USERNAME }}"
+          ORG_GRADLE_PROJECT_mavenCentralPassword: "${{ secrets.MAVEN_CENTRAL_PASSWORD }}"
+          ORG_GRADLE_PROJECT_publishingTag: "true"
 
           KORDEX_MAVEN_PASSWORD: "${{ secrets.KORDEX_MAVEN_PASSWORD }}"
           KORDEX_MAVEN_USERNAME: "${{ secrets.KORDEX_MAVEN_USERNAME }}"

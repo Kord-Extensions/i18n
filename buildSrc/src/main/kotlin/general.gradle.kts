@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.from
-
 plugins {
 	id("dev.yumi.gradle.licenser")
 	id("io.gitlab.arturbosch.detekt")
@@ -30,10 +28,4 @@ license {
 
 kotlin {
 	explicitApi()
-}
-
-val sourceJar = task("sourceJar", Jar::class) {
-	dependsOn(tasks["classes"])
-	archiveClassifier = "sources"
-	from(sourceSets.main.get().allSource)
 }

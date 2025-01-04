@@ -16,7 +16,11 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
+import dev.kordex.i18n.files.FileFormat
+import dev.kordex.i18n.files.PropertiesFormat
+import dev.kordex.i18n.messages.formats.ICUFormatV1
 import java.io.File
+import java.nio.file.Path
 import java.util.*
 
 public val DELIMITERS: Array<String> = arrayOf("_", "-", ".")
@@ -24,12 +28,10 @@ public val MESSAGE_FORMAT_VERSIONS: Array<Int> = arrayOf(1, 2)
 
 /**
  * Representation of a generated translations object.
+ * Handles code generation and formatting based on the given parameters.
  *
  * Usually, you can create an instance of this class and then immediately call [writeTo].
  * Nothing else needs to be done for most use-cases.
- *
- * @param allProps Properties object containing your bundle's default translations, typically loaded from a properties
- *                 file without a locale in its filename.
  *
  * @param bundle Name for your translation bundle, representing its location in your resources under `translations`.
  *               For example, `core.strings` represents translations in `translations/core`, with the filenames
@@ -38,45 +40,47 @@ public val MESSAGE_FORMAT_VERSIONS: Array<Int> = arrayOf(1, 2)
  * @param className Name given to the generated translations object. Defaults to `Translations`.
  * @param classPackage Package to place the generated translations object in.
  *
+ * @param editorConfig An optional path to an editorconfig file, used to autoformat the generated code.
+ *                     Set to `null` to use the default formatting settings instead.
+ *                     Defaults to `.editorconfig` in the current working directory.
+ *
+ * @param fileFormat FileFormat object representing the file format required to load your bundle's files.
+ *                   Defaults to Java Properties format.
+ *
+ * @para messageFormat Message format identifier, representing the message format your bundle uses.
+ *                     Defaults to ICU Message Format version 1.
+ *
  * @param publicVisibility Whether to use `public` (`true`) or `internal` (`false`) visibility modifiers in the
  *                         generated code.
  *                         Defaults to (`true`).
  *
- * @param splitToCamelCase Whether to replace common delimiters in generated names
+ * @param resourceBundle Resource bundle object containing your bundle's base translations.
  */
 public class TranslationsClass(
-	public val allProps: Properties,
+	/** Constructor parameter, see [TranslationsClass]. **/
 	public val bundle: String,
 
+	/** Constructor parameter, see [TranslationsClass]. **/
 	public val className: String = "Translations",
+
+	/** Constructor parameter, see [TranslationsClass]. **/
+	public val classPackage: String,
+
+	/** Constructor parameter, see [TranslationsClass]. **/
+	public val editorConfig: Path? = Path.of(".editorconfig"),
+
+	/** Constructor parameter, see [TranslationsClass]. **/
+	public val fileFormat: FileFormat = PropertiesFormat,
+
+	/** Constructor parameter, see [TranslationsClass]. **/
+	public val messageFormat: String = ICUFormatV1.identifier,
+
+	/** Constructor parameter, see [TranslationsClass]. **/
 	public val publicVisibility: Boolean = true,
 
-	@Deprecated("This option is provided for compatibility with old code, and will be removed in a future version.")
-	public val splitToCamelCase: Boolean = true,
-
-	public val classPackage: String,
-	public val messageFormatVersion: Int = 1,
+	/** Constructor parameter, see [TranslationsClass]. **/
+	public val resourceBundle: ResourceBundle,
 ) {
-	init {
-		@Suppress("DEPRECATION")
-		if (!splitToCamelCase) {
-			System.err.println("")
-
-			System.err.println(
-				"WARNING: Configured to replace delimiters with underscores instead of converting names to " +
-					"camel-case. This option will be removed in a future version."
-			)
-
-			System.err.println("")
-		}
-
-		if (messageFormatVersion !in MESSAGE_FORMAT_VERSIONS) {
-			error(
-				"Invalid message format version $messageFormatVersion - " +
-					"must be one of ${MESSAGE_FORMAT_VERSIONS.joinToString()}"
-			)
-		}
-	}
 
 	/** KModifier represented by [publicVisibility]. **/
 	public val visibility: KModifier = if (publicVisibility) {
@@ -85,8 +89,8 @@ public class TranslationsClass(
 		KModifier.INTERNAL
 	}
 
-	/** Flat list containing all translation keys in [allProps]. **/
-	public val allKeys: List<String> = allProps.toList().map { (left, _) -> left.toString() }
+	/** Flat list containing all translation keys in [resourceBundle]. **/
+	public val allKeys: List<String> = resourceBundle.keys.toList()
 
 	/**
 	 * KotlinPoet [FileSpec] representing the file being generated.
@@ -94,15 +98,11 @@ public class TranslationsClass(
 	 * The [TranslationsClass] fills this automatically, and it is complete as soon as you've created one.
 	 */
 	public val spec: FileSpec = buildFileSpec(classPackage, className) {
-		if (messageFormatVersion != 1) {
-			this.addImport("dev.kordex.core.i18n.types", "MessageFormatVersion")
-		}
-
 		types.addObject(className) {
 			addModifiers(visibility)
 			bundle()
 
-			addKeys(allKeys, allProps, className)
+			addKeys(allKeys, className)
 		}
 	}
 
@@ -116,7 +116,17 @@ public class TranslationsClass(
 	 * @param outputDir [File] representing the output directory.
 	 */
 	public fun writeTo(outputDir: File) {
-		spec.writeTo(outputDir)
+		val buffer = StringBuffer()
+
+		spec.writeTo(buffer)
+
+		val code = buffer.toString().formatCode(editorConfig)
+
+		val parentPath = File(outputDir, classPackage.replace('.', File.separatorChar))
+		val outputFile = File(parentPath, "$className.kt")
+
+		parentPath.mkdirs()
+		outputFile.writeText(code)
 	}
 
 	/**
@@ -142,7 +152,6 @@ public class TranslationsClass(
 
 	public fun TypeSpecBuilder.addKeys(
 		keys: List<String>,
-		props: Properties,
 		translationsClassName: String,
 		parent: String? = null,
 	) {
@@ -155,9 +164,9 @@ public class TranslationsClass(
 				k
 			}
 
-			if (v.isEmpty() || props[keyName] != null) {
+			if (v.isEmpty() || resourceBundle.getStringOrNull(keyName) != null) {
 				properties.add(
-					key(k.toVarName(), keyName, props.getProperty(keyName), translationsClassName)
+					key(k.toVarName(), keyName, resourceBundle.getString(keyName), translationsClassName)
 				)
 			}
 
@@ -165,7 +174,7 @@ public class TranslationsClass(
 				// Object
 				types.addObject(k.toClassName()) {
 					addModifiers(visibility)
-					addKeys(v, props, translationsClassName, keyName)
+					addKeys(v, translationsClassName, keyName)
 				}
 			}
 		}
@@ -176,11 +185,11 @@ public class TranslationsClass(
 			buildPropertySpec("bundle", ClassName("dev.kordex.core.i18n.types", "Bundle")) {
 				addModifiers(visibility)
 
-				if (messageFormatVersion != 1) {
-					setInitializer("Bundle(%S, %L)", bundle, messageFormatVersion.toMessageFormatEnum())
-				} else {
-					setInitializer("Bundle(%S)", bundle)
-				}
+				setInitializer(
+					"Bundle(\nname = %S, \nfileFormat = %S,\nmessageFormat = %S\n)",
+
+					bundle, fileFormat.identifiers.first(), messageFormat
+				)
 			}
 		)
 	}
@@ -207,27 +216,13 @@ public class TranslationsClass(
 
 	@Suppress("DEPRECATION")
 	public fun String.toVarName(): String = let {
-		if (splitToCamelCase) {
-			toClassName()
-				.replaceFirstChar { it.lowercase() }
-		} else {
-			it.replace("-", "_")
-				.replace(".", "_")
-				.replaceFirstChar { it.lowercase() }
-		}
+		toClassName()
+			.replaceFirstChar { it.lowercase() }
 	}
 
 	@Suppress("DEPRECATION", "SpreadOperator")
 	public fun String.toClassName(): String =
-		let {
-			if (splitToCamelCase) {
-				it.split(*DELIMITERS).joinToString("") { it.capitalized() }
-			} else {
-				it.replace("-", " ")
-					.split(" ")
-					.joinToString("") { it.capitalized() }
-			}
-		}
+		split(*DELIMITERS).joinToString("") { it.capitalized() }
 
 	public fun Int.toMessageFormatEnum(): String = when (this) {
 		1 -> "MessageFormatVersion.ONE"
@@ -237,5 +232,19 @@ public class TranslationsClass(
 			"Invalid message format version $this - " +
 				"must be one of ${MESSAGE_FORMAT_VERSIONS.joinToString()}"
 		)
+	}
+
+	public fun ResourceBundle.getStringOrNull(key: String): String? {
+		val result = try {
+			getString(key)
+		} catch (_: MissingResourceException) {
+			return null
+		}
+
+		if (result == key) {
+			return null
+		}
+
+		return result
 	}
 }

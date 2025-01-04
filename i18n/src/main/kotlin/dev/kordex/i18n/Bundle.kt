@@ -6,6 +6,7 @@
 
 package dev.kordex.i18n
 
+import dev.kordex.i18n.files.FileFormat
 import dev.kordex.i18n.messages.MessageFormat
 import dev.kordex.i18n.messages.formats.ICUFormatV1
 import dev.kordex.i18n.registries.ClassLoaderRegistry
@@ -29,8 +30,11 @@ public data class Bundle(
 		ClassLoaderRegistry.register(this)
 	}
 
-	public fun getResourceBundleControl(): ResourceBundle.Control =
+	public fun getFileFormat(): FileFormat =
 		FileFormatRegistry.getOrError(fileFormat)
+
+	public fun getResourceBundleControl(): ResourceBundle.Control =
+		getFileFormat().control
 
 	public fun getMessageFormatter(): MessageFormat =
 		MessageFormatRegistry.getOrError(messageFormat)

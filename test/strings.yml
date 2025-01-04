@@ -1,0 +1,20 @@
+commands:
+  button:
+    action: You pushed the button!
+    description: A simple example command sending a button
+    label: Button!
+    name: button
+
+  slap:
+    action: slaps {0} with their {1}
+    description: Ask the bot to slap another user
+    name: slap
+
+    args:
+      target:
+        description: Person you want to slap
+        name: target
+
+      weapon:
+        description: What you want to slap with
+        name: weapon

@@ -8,34 +8,24 @@
 
 package tests.files
 
-import dev.kordex.i18n.files.PropertiesControl
+import dev.kordex.i18n.files.PropertiesFormat
 import fixtures.TestConstants
 import io.kotest.core.spec.style.FunSpec
 import java.util.Locale
 import java.util.ResourceBundle
-import java.util.ResourceBundle.Control.FORMAT_PROPERTIES
 
 class PropertiesTests : FunSpec({
-	test("correct formats returned") {
-		val formats = PropertiesControl.getFormats(TestConstants.prefixedBaseName)
-
-		assert(formats == FORMAT_PROPERTIES) {
-			"Incorrect formats returned - expected [${FORMAT_PROPERTIES.joinToString()}], " +
-				"got [${formats.joinToString()}]"
-		}
-	}
-
 	test("loads base file") {
 		val englishResourceBundle = ResourceBundle.getBundle(
 			TestConstants.prefixedBundle,
 			Locale("en"),
-			PropertiesControl
+			PropertiesFormat.control
 		)
 
 		val germanResourceBundle = ResourceBundle.getBundle(
 			TestConstants.prefixedBundle,
 			Locale("de"),
-			PropertiesControl
+			PropertiesFormat.control
 		)
 
 		var translation = englishResourceBundle.getString("command.banana")

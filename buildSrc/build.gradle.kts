@@ -15,6 +15,7 @@ dependencies {
 
 	implementation("dev.yumi", "yumi-gradle-licenser", "1.2.0")
 	implementation("io.gitlab.arturbosch.detekt", "detekt-gradle-plugin", "1.23.6")
+	implementation("com.vanniktech.maven.publish.base", "com.vanniktech.maven.publish.base.gradle.plugin", "0.30.0")
 }
 
 beforeEvaluate {

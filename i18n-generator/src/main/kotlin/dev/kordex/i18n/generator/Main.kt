@@ -238,6 +238,7 @@ private fun run(result: CommandLine.ParseResult): Int {
 	val fileFormatObj = FileFormatRegistry.getOrError(fileFormat)
 	val loader = URLClassLoader(arrayOf(inputPath.toURI().toURL()))
 
+	@Suppress("DEPRECATION")
 	val resourceBundle = ResourceBundle.getBundle(
 		bundle.replace(".", "/"),
 		Locale("dummy"),

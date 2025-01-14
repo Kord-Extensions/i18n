@@ -47,10 +47,28 @@ jobs:
         with:
           dependency-graph: generate-and-submit
 
-      - name: Gradle (Build and Publish)
-        run: "./gradlew checkLicenses build publish"
+      - name: Gradle (Build)
+        run: "./gradlew checkLicenses build publishToMavenLocal"
 
         env:
+          GRADLE_PUBLISH_KEY: "${{ secrets.GRADLE_PUBLISH_KEY }}"
+          GRADLE_PUBLISH_SECRET: "${{ secrets.GRADLE_PUBLISH_SECRET }}"
+
+          ORG_GRADLE_PROJECT_signingKey: "${{ secrets.GPG_KEY }}"
+          ORG_GRADLE_PROJECT_signingPassword: "${{ secrets.GPG_PASSWORD }}"
+          ORG_GRADLE_PROJECT_publishingTag: "true"
+
+      - name: Gradle (Test Module)
+        run: "./gradlew build --info --stacktrace"
+        working-directory: "./testModule"
+
+      - name: Gradle (Publish)
+        run: "./gradlew publish publishPlugins"
+
+        env:
+          GRADLE_PUBLISH_KEY: "${{ secrets.GRADLE_PUBLISH_KEY }}"
+          GRADLE_PUBLISH_SECRET: "${{ secrets.GRADLE_PUBLISH_SECRET }}"
+
           ORG_GRADLE_PROJECT_signingKey: "${{ secrets.GPG_KEY }}"
           ORG_GRADLE_PROJECT_signingPassword: "${{ secrets.GPG_PASSWORD }}"
           ORG_GRADLE_PROJECT_mavenCentralUsername: "${{ secrets.MAVEN_CENTRAL_USERNAME }}"
@@ -91,7 +109,9 @@ jobs:
           name: Release ${{ steps.get_tag.outputs.NAME }}
 
           files: |
+            i18n/build/libs/*.jar
             i18n-generator/build/libs/*.jar
+            i18n-gradle/build/libs/*.jar
 
       - name: Release webhook
         run: kotlin .github/release.main.kts
@@ -112,3 +132,17 @@ jobs:
         with:
           name: Generator CLI JAR
           path: "i18n-generator/build/libs/*-all.jar"
+
+      - name: Upload JARs
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: Library JARs
+          path: "i18n/build/libs/*-all.jar"
+
+      - name: Upload JARs
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: Plugin JARs
+          path: "i18n-gradle/build/libs/*-all.jar"

@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import com.vanniktech.maven.publish.SonatypeHost
+import kotlin.collections.contains
 
 plugins {
 	`maven-publish`
@@ -13,6 +14,8 @@ val isSnapshot = project.version.toString().contains("SNAPSHOT")
 val isTag = (project.findProperty("publishingTag") as String?) == "true"
 
 afterEvaluate {
+	val env = System.getenv()
+
 	publishing {
 		repositories {
 			maven {
@@ -47,7 +50,9 @@ afterEvaluate {
 					)
 				)
 
-				signAllPublications()
+				if (env.contains("GITHUB_ACTIONS") && !env.contains("NO_SIGNING")) {
+					signAllPublications()
+				}
 
 				coordinates(project.group.toString(), project.name, project.version.toString())
 
@@ -83,13 +88,15 @@ afterEvaluate {
 		}
 	}
 
-	signing {
-		val signingKey: String? by project ?: return@signing
-		val signingPassword: String? by project ?: return@signing
+	if (env.contains("GITHUB_ACTIONS") && !env.contains("NO_SIGNING")) {
+		signing {
+			val signingKey: String? by project ?: return@signing
+			val signingPassword: String? by project ?: return@signing
 
-		useInMemoryPgpKeys(signingKey, signingPassword)
+			useInMemoryPgpKeys(signingKey, signingPassword)
 
-		sign(publishing.publications["maven"])
+			sign(publishing.publications["maven"])
+		}
 	}
 }
 

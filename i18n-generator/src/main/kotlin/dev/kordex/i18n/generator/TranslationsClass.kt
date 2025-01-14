@@ -138,7 +138,7 @@ public class TranslationsClass(
 	 * @param translationsClassName [String] representing the name of the containing translations object.
 	 */
 	public fun key(varName: String, keyName: String, keyValue: String, translationsClassName: String): PropertySpec =
-		buildPropertySpec(varName, ClassName("dev.kordex.core.i18n.types", "Key")) {
+		buildPropertySpec(varName, ClassName("dev.kordex.i18n", "Key")) {
 			addModifiers(visibility)
 			setInitializer("Key(%S)\n.withBundle(%L.bundle)", keyName, translationsClassName)
 
@@ -182,7 +182,7 @@ public class TranslationsClass(
 
 	public fun TypeSpecBuilder.bundle() {
 		properties.add(
-			buildPropertySpec("bundle", ClassName("dev.kordex.core.i18n.types", "Bundle")) {
+			buildPropertySpec("bundle", ClassName("dev.kordex.i18n", "Bundle")) {
 				addModifiers(visibility)
 
 				setInitializer(

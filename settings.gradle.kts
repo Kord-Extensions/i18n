@@ -12,3 +12,4 @@ rootProject.name = "i18n"
 
 include("i18n")
 include("i18n-generator")
+include("i18n-gradle")

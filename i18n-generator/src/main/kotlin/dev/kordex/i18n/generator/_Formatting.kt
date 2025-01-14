@@ -12,14 +12,12 @@ import com.pinterest.ktlint.rule.engine.api.EditorConfigDefaults
 import com.pinterest.ktlint.rule.engine.api.KtLintRuleEngine
 import com.pinterest.ktlint.rule.engine.core.api.AutocorrectDecision
 import com.pinterest.ktlint.rule.engine.core.api.propertyTypes
-import java.net.URL
-import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.*
 
 private val ruleProviders = ServiceLoader.load(
 	RuleSetProviderV3::class.java,
-	URLClassLoader(emptyArray<URL?>()),
+	TranslationsClass::class.java.classLoader,
 )
 	.flatMap { it.getRuleProviders() }
 	.toSet()
